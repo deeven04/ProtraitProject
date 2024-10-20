@@ -13,3 +13,4 @@ This repository contains the implementation of **Light Maps** for relighting por
 6. Navigate to the folder ```projects/dsine/```, and run the following command:
    ```python
    python light_maps.py ./experiments/exp001_cvpr2024/dsine.txt
+7. The output images are save in ```projects/samples/output/```
