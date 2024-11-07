@@ -55,18 +55,11 @@ def illumination_map(hdr_image):
 
     return luminance_map
 
-def angular_areas(hdr_image):
-    height, width, _ = hdr_image.shape
-    dtheta = np.pi / height
-    dphi = 2 * np.pi / width
-    
-    areas = np.zeros((height, width))
-    for i in range(height):
-        theta = (i + 0.5) * dtheta - np.pi / 2
-        sin_theta = np.sin(theta)
-        areas[i, :] = sin_theta * dtheta * dphi
-    
-    return areas
+def angular_areas(num_samples):
+    # Area of each direction (solid angle), assuming uniform sampling
+    total_area = 4 * np.pi  # Total solid angle for the entire sphere
+    angular_area_per_direction = total_area / (num_samples**2)
+    return angular_area_per_direction
 
 
 # def get_light_direction():
@@ -102,6 +95,7 @@ def diffuse_reflection(I_map, N, A, kd):
     
     return D
 
+
 # Specular reflection is the mirror-like reflection of light from a smooth surface, depends on the viewing angle
 def specular_reflection(I, N, A, ks, n):
     S = np.zeros_like(I_map)
@@ -121,7 +115,7 @@ def specular_reflection(I, N, A, ks, n):
 
 # Output intensity combines both diffuse and specular reflections to give a realistic rendering of the scene
 def output_intensity(D, S, N, Wd, Ws):
-    E = np.array([0, 0, 1])
+    E = np.array([0, 0, 1]) # desired viewing/eye direction
     N_transposed = np.transpose(N, (1, 2, 0))
     E_dot_N = np.einsum('ijk,k->ij', N_transposed, E)
     R = 2 * N_transposed * E_dot_N[:, :, np.newaxis] - E
@@ -148,7 +142,7 @@ B = hdr_tensor[:, :, 2]
 
 I_map = illumination_map(hdr_image)
 print("Illuminatin map done")
-A = angular_areas(hdr_image)
+A = angular_areas(20)
 print("Areas done")
 
 model, device = load_model()
