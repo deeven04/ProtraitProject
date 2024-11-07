@@ -14,23 +14,33 @@ output_dir = './samples/output'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
+
 def save_image(image, filename):
     """ Save the image in the output directory """
     output_path = os.path.join(output_dir, filename)
     plt.imsave(output_path, image)
     print(f"Image saved: {output_path}")
 
-def display_image_in_color(image, title='', cmap='jet',  save_as=None):
+def display_image_in_color(image, title='', cmap='jet', k=None, Wd=None, Ws=None, save_as=None):
     norm_image = (image - np.min(image)) / (np.max(image) - np.min(image))
     color_image = plt.colormaps[cmap](norm_image)
     color_image = color_image[..., :3]
     plt.figure(figsize=(10, 5))
     plt.imshow(color_image)
+    if k is not None:
+        # title = f"{title} - k: {k:.3f}"
+        filename_with_values = f"{title.replace(' ', '_')}_k_{k:.3f}.png"
+    elif Wd is not None and Ws is not None:
+        # title = f"{title} - Wd: {Wd:.3f}, Ws: {Ws:.3f}"
+        filename_with_values = f"{title.replace(' ', '_')}_Wd_{Wd:.3f}_Ws_{Ws:.3f}.png"
+    
     plt.title(title)
     plt.axis('off')
     if save_as:
-        save_image(image, save_as)
+        save_image(image, filename_with_values)
+    
     # plt.show()
+
 
 def display_normals(normals_tensor, title='Normal Map',  save_as=None):
     normals_np = normals_tensor.squeeze(0).permute(1, 2, 0).numpy()
@@ -130,7 +140,7 @@ def output_intensity(D, S, N, Wd, Ws):
 
 
 print(os.getcwd())
-file_path = os.path.abspath('samples/img/test1.hdr')
+file_path = os.path.abspath('samples/img/test2.hdr')
 print(file_path)
 hdr_image = load_hdr_image(file_path)
 hdr_tensor = np.array(hdr_image)
@@ -147,28 +157,27 @@ print("Areas done")
 
 model, device = load_model()
 N = calculate_normals(file_path, model, device)
-display_normals(N, title="Normals", save_as="Normals.png")
+display_normals(N, title="Normals", save_as="Normals2.png")
 N = N.squeeze(0)
 if len(N.shape) == 4:
     N = N[0]
 print("Surface Normals done")
 
-kd = 0.8
+kd = 0.5
 D = diffuse_reflection(I_map, N, A, kd)
 print("Diffuse reflection map done.")
-display_image_in_color(D, title="Diffuse Reflection Map in Color", cmap='jet', save_as="DR.png")
+display_image_in_color(D, title="DR", cmap='jet', k=kd, save_as="DR.png")
 
-ks = 0.5
+ks = 0.8
 n = 10
 S = specular_reflection(I_map, N, A, ks, n)
 print("Specular reflection map done.")
-display_image_in_color(S, title="Specular Reflection Map in Color", cmap='jet', save_as="SR.png")
+display_image_in_color(S, title="SR", cmap='jet',k=ks, save_as="SR.png")
 
-Wd = 0.7
-Ws = 0.3
+Wd = 0.3
+Ws = 0.7
 intensity = output_intensity(D, S, N, Wd, Ws)
-display_image_in_color(intensity, title="Final Intensity Map", cmap='jet', save_as="OI.png")
-
+display_image_in_color(intensity, title="OI", cmap='jet', Wd=Wd, Ws=Ws, save_as="OI.png")
 
 # to run : python lightmaps.py ./experiments/exp001_cvpr2024/dsine.txt
 
